@@ -80,7 +80,7 @@ describe("SmartDogeBurnPile", () => {
         await deployContracts();
     });
 
-    describe("burning", () => {
+    describe("burn", () => {
         it("accepts funds below the refund cap", async () => {
             const amount = roundRefundCap / 2;
             await burn(amount);
@@ -104,7 +104,7 @@ describe("SmartDogeBurnPile", () => {
         })
     });
 
-    describe("refunding", () => {
+    describe("refund", () => {
         it("doesn't issue a refund for a round in progress", async () => {
             await burn(roundRefundCap * 2);
             const preRefundBalance = await getUserBalance();
@@ -217,7 +217,7 @@ describe("SmartDogeBurnPile", () => {
         });
     });
 
-    describe("funding", () => {
+    describe("fund", () => {
         it("sends half of nonrefundable tokens to the fund address when the amount exceeds the cap", async () => {
             const amount = roundRefundCap * 3;
             const nonrefundableAmount = amount - roundRefundCap;
@@ -289,4 +289,41 @@ describe("SmartDogeBurnPile", () => {
             expect(await refund()).not.to.emit(smartDogeBurnPile, "Refund");
         });
     });
+
+    describe("update refund cap", () => {
+        it("succeeds when called from the owner account", async () => {
+            await smartDogeBurnPile.connect(owner).updateRefundCap(1000000);
+        });
+
+        it("fails when called from a non-owner account", async () => {
+            await expect(smartDogeBurnPile.connect(users[0]).updateRefundCap(1000000)).to.be.revertedWith("Ownable: caller is not the owner");
+        });
+
+        it("updates the refund cap for future rounds only", async () => {
+            const updatedRefundCap = 1;
+            const amount = roundRefundCap;
+
+            // Standard cap
+            await burn(amount);
+            await mineBlocks(roundLengthBlocks);
+
+            // Standard cap
+            await burn(amount * 2);
+            await mineBlocks(roundLengthBlocks);
+
+            // Standard cap - updated goes into effect next round
+            await smartDogeBurnPile.connect(owner).updateRefundCap(updatedRefundCap);
+            await burn(amount * 2);
+            await burn(amount * 2);
+            await mineBlocks(roundLengthBlocks);
+
+            // Updated cap
+            await burn(amount);
+            await mineBlocks(roundLengthBlocks);
+
+            await refund();
+            const balance = await getUserBalance();
+            expect(balance).to.equal((3 * roundRefundCap) + updatedRefundCap);
+        });
+    })
 })
