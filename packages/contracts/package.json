@@ -9,7 +9,6 @@
         "clean": "rm -rf artifacts cache typechain flattened",
         "compile": "hardhat compile",
         "deploy:testnet": "TS_NODE_TRANSPILE_ONLY=1 hardhat run --network testnet scripts/deploy-testnet.ts",
-        "flatten": "mkdir -p flattened && hardhat flatten contracts/src/SmartDogeBurnPile.sol > flattened/SmartDogeBurnPile.sol",
         "test": "hardhat test"
     },
     "devDependencies": {
@@ -21,6 +20,7 @@
         "@typechain/ethers-v5": "^7.0.1",
         "@typechain/hardhat": "^2.3.0",
         "@types/chai": "^4.3.1",
+        "@types/dotenv": "^8.2.0",
         "@types/mocha": "^9.1.1",
         "@types/node": "^16.11.35",
         "chai": "^4.3.6",
